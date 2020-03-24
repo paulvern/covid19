@@ -51,7 +51,7 @@ ui=dashboardPage(
   dashboardSidebar(width=300,
                    useShinyjs(),
               
-                   dateRangeInput("daterange","Scegli la data",start="01/22/20",end=Sys.Date(),format="mm/dd/yy",min="01/22/20",max=Sys.Date()+1,language="it"),
+                   dateRangeInput("daterange","Scegli la data",start="01/22/20",end=Sys.Date(),format="mm/dd/yy",min="01/22/20",max=Sys.Date(),language="it"),
                    selectInput("country","Scegli la nazione",choices = country,selected=' Italy'),
                    checkboxInput("loga","Scala logaritmica",value=FALSE),
                    selectInput("provincia","Scegli la provincia",choices = province,selected='Bologna')

@@ -20,12 +20,13 @@ library(shinyjs)
 library(shinydashboard)
 library(ggplot2)
 library(reshape2)
+library(DataCombine)
 # Define UI for data download app ----
 myCsv <- getURL("https://docs.google.com/spreadsheets/d/12WlQnFjikE5ZFSep4n2MKglMx5KLgRONW4QHu64H5DE/gviz/tq?tqx=out:csv",ssl.verifypeer = FALSE)
 death<-read.csv(textConnection(myCsv),check.names = TRUE)
-dr<-round(max(death$Total.Deaths,na.rm=TRUE)/max(death$Total.Cases,na.rm=TRUE)*100,1)
+dr<-paste0("Mondo=",(death[nrow(death),]$Tot.Deaths..1M.pop)," - Italia=",death[death$Country..Other=="Italy",]$Tot.Deaths..1M.pop)
 dre<-round(max(death$Total.Deaths,na.rm=TRUE)/(max(death$Total.Recovered,na.rm=TRUE)+max(death$Total.Deaths,na.rm=TRUE))*100,1)
-myCsv <- getURL("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv",ssl.verifypeer = FALSE)
+myCsv <- getURL("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv",ssl.verifypeer = FALSE)
 Lod<-read.csv(textConnection(myCsv),check.names = FALSE)
 col<-ncol(Lod)
 world<-reshape(Lod, 
@@ -53,6 +54,7 @@ ui=dashboardPage(
               
                    dateRangeInput("daterange","Scegli la data",start="01/22/20",end=Sys.Date(),format="mm/dd/yy",min="01/22/20",max=Sys.Date(),language="it"),
                    selectInput("country","Scegli la nazione",choices = country,selected=' Italy'),
+                   checkboxInput("incre","Mostra incremento percentuale",value=FALSE),
                    checkboxInput("loga","Scala logaritmica",value=FALSE),
                    selectInput("provincia","Scegli la provincia",choices = province,selected='Bologna')
                   
@@ -68,7 +70,8 @@ ui=dashboardPage(
                 
              
                 box(leafletOutput("mappetta",height = 380),height=400),
-                infoBox("% morti su totale (mondo)", dr, icon = icon("credit-card"),color='purple'),
+                
+                infoBox("% morti per 1M di abitanti (mondo-Italia)", dr, icon = icon("credit-card"),color='purple'),
                 infoBox("% morti su esiti (mondo)", dre, icon = icon("credit-card"),color='red'),
                 infoBox("Dati italiani aggiornati al ",max(Italy$data2)),
                 infoBox("Dati mondo aggiornati al",max(world$date2)))
@@ -131,6 +134,18 @@ output$grafico2<-renderPlotly({
         xaxis=list(title = "Date",nticks=round(0.5*(as.Date(input$daterange[2])-as.Date(input$daterange[1])))),
         yaxis = list(type = "log"),
         title = paste0('Casi di Covid-19 a ',input$provincia,"- scala logaritmica"))
+    
+    
+  }
+  
+  if (input$incre==TRUE){
+    plotto<-italyplot[italyplot$denominazione_provincia==input$provincia,]
+   plotto<- change(plotto,"totale_casi",type="percent",NewVar = "percento")
+    p<- plot_ly(plotto,x=~data2)%>% add_trace(y=~percento,type="scatter",mode="lines")%>%
+      layout(
+        xaxis=list(title = "Date",nticks=round(0.5*(as.Date(input$daterange[2])-as.Date(input$daterange[1])))),
+        
+        title = paste0('Casi di Covid-19 a ',input$provincia,"- percentuale incremento"))
     
     
   }
